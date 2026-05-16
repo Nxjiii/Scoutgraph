@@ -1,0 +1,29 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Local datasets and generated artifacts.
+# The repo contains code and documentation, not redistributed football data.
+data/raw/*
+data/processed/*
+data/cache/*
+*.duckdb
+*.sqlite
+*.parquet
+
+# Keep folder structure visible.
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/cache/.gitkeep
+
+# Notebook execution noise.
+.ipynb_checkpoints/
+
+# Private working notes and implementation scratch docs.
+docs/internal/*
+!docs/internal/.gitkeep
+Scoutgraph.md
