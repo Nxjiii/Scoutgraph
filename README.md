@@ -12,7 +12,7 @@ The first phase of the project is backend-only:
 
 ## Current Status
 
-This repo is at the foundation stage. It has project structure and a tiny CLI entrypoint, but no ingestion pipeline yet.
+This repo is in the first backend phase. It can fetch a small StatsBomb Open Data sample, inspect the raw event structure, and normalize the sample into local analytical tables.
 
 ## Planned Backend Shape
 
@@ -28,6 +28,27 @@ src/scoutgraph/
 ## Data Policy
 
 ScoutGraph works with public football data sources and documents source-specific attribution and usage requirements as integrations are added.
+
+## Current Commands
+
+Fetch the starter StatsBomb sample:
+
+```bash
+scoutgraph ingest statsbomb-sample
+```
+
+Inspect the cached raw sample:
+
+```bash
+scoutgraph inspect statsbomb-sample
+scoutgraph inspect statsbomb-event
+```
+
+Normalize the sample into analytical tables:
+
+```bash
+scoutgraph normalize statsbomb-sample
+```
 
 ## Documentation
 
