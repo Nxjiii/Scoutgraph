@@ -15,12 +15,12 @@ from scoutgraph.sources.statsbomb.inspect import format_raw_event, get_raw_event
 from scoutgraph.sources.statsbomb.normalize import normalize_match, normalize_sample
 from scoutgraph.storage.paths import ProjectPaths
 
-app = typer.Typer(help="ScoutGraph backend tools.")
-ingest_app = typer.Typer(help="Ingest source football data.")
-inspect_app = typer.Typer(help="Inspect cached source football data.")
-normalize_app = typer.Typer(help="Normalize cached source data.")
-query_app = typer.Typer(help="Query normalized ScoutGraph data.")
-list_app = typer.Typer(help="List available source data.")
+app = typer.Typer(help="Football data ingestion, inspection, normalization, and query tools.")
+ingest_app = typer.Typer(help="Download raw football data into the local cache.")
+inspect_app = typer.Typer(help="Inspect cached raw football data.")
+normalize_app = typer.Typer(help="Convert cached raw data into analytical tables.")
+query_app = typer.Typer(help="Query normalized ScoutGraph tables.")
+list_app = typer.Typer(help="Discover available source competitions and matches.")
 app.add_typer(ingest_app, name="ingest")
 app.add_typer(inspect_app, name="inspect")
 app.add_typer(normalize_app, name="normalize")

@@ -12,7 +12,7 @@ The first phase of the project is backend-only:
 
 ## Current Status
 
-This repo is in the first backend phase. It can fetch a small StatsBomb Open Data sample, inspect the raw event structure, and normalize the sample into local analytical tables.
+This repo is in the first backend phase. It can list available StatsBomb Open Data competition-seasons, fetch a specific match, inspect the raw event structure, normalize match data into local analytical tables, and query normalized pass data.
 
 ## Planned Backend Shape
 
@@ -67,6 +67,12 @@ Normalize a specific StatsBomb match:
 
 ```bash
 scoutgraph normalize statsbomb-match --competition-id 9 --season-id 281 --match-id 3895302
+```
+
+Query normalized sample pass data:
+
+```bash
+scoutgraph query sample-passes --limit 5
 ```
 
 ## Documentation
