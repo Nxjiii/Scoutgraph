@@ -5,6 +5,12 @@ import typer
 from scoutgraph.query.sample import format_passes, load_sample_passes
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
 from scoutgraph.sources.statsbomb.client import StatsBombMatchRef
+from scoutgraph.sources.statsbomb.discovery import (
+    format_competition_option,
+    format_match_option,
+    list_competitions,
+    list_matches,
+)
 from scoutgraph.sources.statsbomb.inspect import format_raw_event, get_raw_event, inspect_sample
 from scoutgraph.sources.statsbomb.normalize import normalize_match, normalize_sample
 from scoutgraph.storage.paths import ProjectPaths
@@ -14,10 +20,12 @@ ingest_app = typer.Typer(help="Ingest source football data.")
 inspect_app = typer.Typer(help="Inspect cached source football data.")
 normalize_app = typer.Typer(help="Normalize cached source data.")
 query_app = typer.Typer(help="Query normalized ScoutGraph data.")
+list_app = typer.Typer(help="List available source data.")
 app.add_typer(ingest_app, name="ingest")
 app.add_typer(inspect_app, name="inspect")
 app.add_typer(normalize_app, name="normalize")
 app.add_typer(query_app, name="query")
+app.add_typer(list_app, name="list")
 
 
 @app.callback()
@@ -233,3 +241,47 @@ def query_sample_passes(
     typer.echo("Sample passes")
     for line in format_passes(passes):
         typer.echo(line)
+
+
+@list_app.command("statsbomb-competitions")
+def list_statsbomb_competitions(
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of competition-season rows to show."),
+    ] = 25,
+) -> None:
+    """List available StatsBomb competition-season IDs."""
+    paths = ProjectPaths.from_root(root)
+    client = StatsBombOpenDataClient(paths)
+    options = list_competitions(client)
+
+    typer.echo("StatsBomb competitions")
+    for option in options[:limit]:
+        typer.echo(format_competition_option(option))
+
+
+@list_app.command("statsbomb-matches")
+def list_statsbomb_matches(
+    competition_id: Annotated[int, typer.Option(help="StatsBomb competition id.")],
+    season_id: Annotated[int, typer.Option(help="StatsBomb season id.")],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of matches to show."),
+    ] = 25,
+) -> None:
+    """List available StatsBomb matches for one competition-season."""
+    paths = ProjectPaths.from_root(root)
+    client = StatsBombOpenDataClient(paths)
+    options = list_matches(client, competition_id=competition_id, season_id=season_id)
+
+    typer.echo("StatsBomb matches")
+    for option in options[:limit]:
+        typer.echo(format_match_option(option))

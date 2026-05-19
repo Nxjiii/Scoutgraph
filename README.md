@@ -31,6 +31,13 @@ ScoutGraph works with public football data sources and documents source-specific
 
 ## Current Commands
 
+List available StatsBomb competition-seasons and matches:
+
+```bash
+scoutgraph list statsbomb-competitions
+scoutgraph list statsbomb-matches --competition-id 9 --season-id 281
+```
+
 Fetch the starter StatsBomb sample:
 
 ```bash
