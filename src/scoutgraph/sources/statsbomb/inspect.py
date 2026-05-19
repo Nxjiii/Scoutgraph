@@ -3,7 +3,11 @@ from dataclasses import dataclass
 import json
 from typing import Any
 
-from scoutgraph.sources.statsbomb.client import StatsBombOpenDataClient, StatsBombSample
+from scoutgraph.sources.statsbomb.client import (
+    DEFAULT_SAMPLE_MATCH,
+    StatsBombMatchRef,
+    StatsBombOpenDataClient,
+)
 
 
 @dataclass(frozen=True)
@@ -34,11 +38,18 @@ class StatsBombInspectionSummary:
 
 def inspect_sample(
     client: StatsBombOpenDataClient,
-    sample: StatsBombSample = StatsBombSample(),
 ) -> StatsBombInspectionSummary:
     """Summarize the cached raw StatsBomb sample without normalizing it."""
-    events = client.fetch_json(f"events/{sample.match_id}.json")
-    lineups = client.fetch_json(f"lineups/{sample.match_id}.json")
+    return inspect_match(client, DEFAULT_SAMPLE_MATCH)
+
+
+def inspect_match(
+    client: StatsBombOpenDataClient,
+    match_ref: StatsBombMatchRef,
+) -> StatsBombInspectionSummary:
+    """Summarize one cached raw StatsBomb match without normalizing it."""
+    events = client.fetch_json(f"events/{match_ref.match_id}.json")
+    lineups = client.fetch_json(f"lineups/{match_ref.match_id}.json")
 
     event_type_counts = Counter(event["type"]["name"] for event in events)
 
@@ -53,7 +64,7 @@ def inspect_sample(
 def get_raw_event(
     client: StatsBombOpenDataClient,
     *,
-    match_id: int = StatsBombSample().match_id,
+    match_id: int = DEFAULT_SAMPLE_MATCH.match_id,
     event_id: str | None = None,
     event_type: str | None = "Pass",
 ) -> dict[str, Any]:

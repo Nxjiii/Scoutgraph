@@ -37,6 +37,12 @@ Fetch the starter StatsBomb sample:
 scoutgraph ingest statsbomb-sample
 ```
 
+Fetch a specific StatsBomb match:
+
+```bash
+scoutgraph ingest statsbomb-match --competition-id 9 --season-id 281 --match-id 3895302
+```
+
 Inspect the cached raw sample:
 
 ```bash
@@ -48,6 +54,12 @@ Normalize the sample into analytical tables:
 
 ```bash
 scoutgraph normalize statsbomb-sample
+```
+
+Normalize a specific StatsBomb match:
+
+```bash
+scoutgraph normalize statsbomb-match --competition-id 9 --season-id 281 --match-id 3895302
 ```
 
 ## Documentation
