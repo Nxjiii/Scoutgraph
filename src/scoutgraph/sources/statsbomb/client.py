@@ -12,16 +12,23 @@ STATSBOMB_BASE_URL = "https://raw.githubusercontent.com/statsbomb/open-data/mast
 
 
 @dataclass(frozen=True)
-class StatsBombSample:
-    """Known small sample used while building the ingestion layer."""
+class StatsBombMatchRef:
+    """Reference to one StatsBomb match and its parent competition-season."""
 
-    competition_id: int = 9
-    season_id: int = 281
-    match_id: int = 3895302
+    competition_id: int
+    season_id: int
+    match_id: int
+
+
+DEFAULT_SAMPLE_MATCH = StatsBombMatchRef(
+    competition_id=9,
+    season_id=281,
+    match_id=3895302,
+)
 
 
 @dataclass(frozen=True)
-class StatsBombSampleSummary:
+class StatsBombMatchSummary:
     competition_name: str
     season_name: str
     home_team: str
@@ -41,33 +48,37 @@ class StatsBombOpenDataClient:
         self.base_url = base_url.rstrip("/")
         self.raw_root = paths.raw_data / "statsbomb"
 
-    def fetch_sample(self, sample: StatsBombSample = StatsBombSample()) -> StatsBombSampleSummary:
-        """Download the starter sample and return a human-readable summary."""
+    def fetch_match(self, match_ref: StatsBombMatchRef) -> StatsBombMatchSummary:
+        """Download one match's raw files and return a human-readable summary."""
         self.paths.ensure()
 
         competitions = self.fetch_json("competitions.json")
-        matches = self.fetch_json(f"matches/{sample.competition_id}/{sample.season_id}.json")
-        events = self.fetch_json(f"events/{sample.match_id}.json")
-        lineups = self.fetch_json(f"lineups/{sample.match_id}.json")
+        matches = self.fetch_json(f"matches/{match_ref.competition_id}/{match_ref.season_id}.json")
+        events = self.fetch_json(f"events/{match_ref.match_id}.json")
+        lineups = self.fetch_json(f"lineups/{match_ref.match_id}.json")
 
         competition = self._find_competition(
             competitions,
-            competition_id=sample.competition_id,
-            season_id=sample.season_id,
+            competition_id=match_ref.competition_id,
+            season_id=match_ref.season_id,
         )
-        match = self._find_match(matches, match_id=sample.match_id)
+        match = self._find_match(matches, match_id=match_ref.match_id)
 
-        return StatsBombSampleSummary(
+        return StatsBombMatchSummary(
             competition_name=competition["competition_name"],
             season_name=competition["season_name"],
             home_team=match["home_team"]["home_team_name"],
             away_team=match["away_team"]["away_team_name"],
             home_score=match["home_score"],
             away_score=match["away_score"],
-            match_id=sample.match_id,
+            match_id=match_ref.match_id,
             event_count=len(events),
             lineup_team_count=len(lineups),
         )
+
+    def fetch_sample(self) -> StatsBombMatchSummary:
+        """Download the starter sample and return a human-readable summary."""
+        return self.fetch_match(DEFAULT_SAMPLE_MATCH)
 
     def fetch_json(self, relative_path: str) -> Any:
         """Load a StatsBomb JSON file from local cache or download it."""
@@ -110,4 +121,3 @@ class StatsBombOpenDataClient:
             if match["match_id"] == match_id:
                 return match
         raise ValueError(f"Match {match_id} was not found")
-

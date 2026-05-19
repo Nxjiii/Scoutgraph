@@ -2,18 +2,30 @@ from typing import Annotated
 
 import typer
 
+from scoutgraph.query.sample import format_passes, load_sample_passes
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
+from scoutgraph.sources.statsbomb.client import StatsBombMatchRef
+from scoutgraph.sources.statsbomb.discovery import (
+    format_competition_option,
+    format_match_option,
+    list_competitions,
+    list_matches,
+)
 from scoutgraph.sources.statsbomb.inspect import format_raw_event, get_raw_event, inspect_sample
-from scoutgraph.sources.statsbomb.normalize import normalize_sample
+from scoutgraph.sources.statsbomb.normalize import normalize_match, normalize_sample
 from scoutgraph.storage.paths import ProjectPaths
 
 app = typer.Typer(help="ScoutGraph backend tools.")
 ingest_app = typer.Typer(help="Ingest source football data.")
 inspect_app = typer.Typer(help="Inspect cached source football data.")
 normalize_app = typer.Typer(help="Normalize cached source data.")
+query_app = typer.Typer(help="Query normalized ScoutGraph data.")
+list_app = typer.Typer(help="List available source data.")
 app.add_typer(ingest_app, name="ingest")
 app.add_typer(inspect_app, name="inspect")
 app.add_typer(normalize_app, name="normalize")
+app.add_typer(query_app, name="query")
+app.add_typer(list_app, name="list")
 
 
 @app.callback()
@@ -51,6 +63,37 @@ def ingest_statsbomb_sample(
     summary = client.fetch_sample()
 
     typer.echo("StatsBomb sample ready")
+    typer.echo(f"competition: {summary.competition_name} {summary.season_name}")
+    typer.echo(
+        "match: "
+        f"{summary.home_team} {summary.home_score}-{summary.away_score} {summary.away_team}"
+    )
+    typer.echo(f"match id: {summary.match_id}")
+    typer.echo(f"events: {summary.event_count}")
+    typer.echo(f"lineup teams: {summary.lineup_team_count}")
+
+
+@ingest_app.command("statsbomb-match")
+def ingest_statsbomb_match(
+    competition_id: Annotated[int, typer.Option(help="StatsBomb competition id.")],
+    season_id: Annotated[int, typer.Option(help="StatsBomb season id.")],
+    match_id: Annotated[int, typer.Option(help="StatsBomb match id.")],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+) -> None:
+    """Download and inspect raw files for one StatsBomb match."""
+    paths = ProjectPaths.from_root(root)
+    client = StatsBombOpenDataClient(paths)
+    match_ref = StatsBombMatchRef(
+        competition_id=competition_id,
+        season_id=season_id,
+        match_id=match_id,
+    )
+    summary = client.fetch_match(match_ref)
+
+    typer.echo("StatsBomb match ready")
     typer.echo(f"competition: {summary.competition_name} {summary.season_name}")
     typer.echo(
         "match: "
@@ -153,3 +196,92 @@ def normalize_statsbomb_sample(
     typer.echo("Normalized StatsBomb sample")
     for table_name, count in normalized.counts().items():
         typer.echo(f"{table_name}: {count}")
+
+
+@normalize_app.command("statsbomb-match")
+def normalize_statsbomb_match(
+    competition_id: Annotated[int, typer.Option(help="StatsBomb competition id.")],
+    season_id: Annotated[int, typer.Option(help="StatsBomb season id.")],
+    match_id: Annotated[int, typer.Option(help="StatsBomb match id.")],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+) -> None:
+    """Normalize one cached StatsBomb match into local Parquet tables."""
+    paths = ProjectPaths.from_root(root)
+    client = StatsBombOpenDataClient(paths)
+    match_ref = StatsBombMatchRef(
+        competition_id=competition_id,
+        season_id=season_id,
+        match_id=match_id,
+    )
+    normalized = normalize_match(client, match_ref)
+
+    typer.echo("Normalized StatsBomb match")
+    for table_name, count in normalized.counts().items():
+        typer.echo(f"{table_name}: {count}")
+
+
+@query_app.command("sample-passes")
+def query_sample_passes(
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of pass rows to show."),
+    ] = 10,
+) -> None:
+    """Show passes from the normalized StatsBomb sample."""
+    paths = ProjectPaths.from_root(root)
+    passes = load_sample_passes(paths, limit=limit)
+
+    typer.echo("Sample passes")
+    for line in format_passes(passes):
+        typer.echo(line)
+
+
+@list_app.command("statsbomb-competitions")
+def list_statsbomb_competitions(
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of competition-season rows to show."),
+    ] = 25,
+) -> None:
+    """List available StatsBomb competition-season IDs."""
+    paths = ProjectPaths.from_root(root)
+    client = StatsBombOpenDataClient(paths)
+    options = list_competitions(client)
+
+    typer.echo("StatsBomb competitions")
+    for option in options[:limit]:
+        typer.echo(format_competition_option(option))
+
+
+@list_app.command("statsbomb-matches")
+def list_statsbomb_matches(
+    competition_id: Annotated[int, typer.Option(help="StatsBomb competition id.")],
+    season_id: Annotated[int, typer.Option(help="StatsBomb season id.")],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of matches to show."),
+    ] = 25,
+) -> None:
+    """List available StatsBomb matches for one competition-season."""
+    paths = ProjectPaths.from_root(root)
+    client = StatsBombOpenDataClient(paths)
+    options = list_matches(client, competition_id=competition_id, season_id=season_id)
+
+    typer.echo("StatsBomb matches")
+    for option in options[:limit]:
+        typer.echo(format_match_option(option))

@@ -3,11 +3,15 @@ from typing import Any
 
 import pandas as pd
 
-from scoutgraph.sources.statsbomb.client import StatsBombOpenDataClient, StatsBombSample
+from scoutgraph.sources.statsbomb.client import (
+    DEFAULT_SAMPLE_MATCH,
+    StatsBombMatchRef,
+    StatsBombOpenDataClient,
+)
 
 
 @dataclass(frozen=True)
-class NormalizedStatsBombSample:
+class NormalizedStatsBombMatch:
     competitions: pd.DataFrame
     matches: pd.DataFrame
     teams: pd.DataFrame
@@ -32,29 +36,36 @@ class NormalizedStatsBombSample:
 
 def normalize_sample(
     client: StatsBombOpenDataClient,
-    sample: StatsBombSample = StatsBombSample(),
-) -> NormalizedStatsBombSample:
+) -> NormalizedStatsBombMatch:
     """Normalize the cached StatsBomb sample into flat analytical tables."""
+    return normalize_match(client, DEFAULT_SAMPLE_MATCH)
+
+
+def normalize_match(
+    client: StatsBombOpenDataClient,
+    match_ref: StatsBombMatchRef,
+) -> NormalizedStatsBombMatch:
+    """Normalize one cached StatsBomb match into flat analytical tables."""
     competitions = client.fetch_json("competitions.json")
-    matches = client.fetch_json(f"matches/{sample.competition_id}/{sample.season_id}.json")
-    events = client.fetch_json(f"events/{sample.match_id}.json")
-    lineups = client.fetch_json(f"lineups/{sample.match_id}.json")
+    matches = client.fetch_json(f"matches/{match_ref.competition_id}/{match_ref.season_id}.json")
+    events = client.fetch_json(f"events/{match_ref.match_id}.json")
+    lineups = client.fetch_json(f"lineups/{match_ref.match_id}.json")
 
     competition = client._find_competition(
         competitions,
-        competition_id=sample.competition_id,
-        season_id=sample.season_id,
+        competition_id=match_ref.competition_id,
+        season_id=match_ref.season_id,
     )
-    match = client._find_match(matches, match_id=sample.match_id)
+    match = client._find_match(matches, match_id=match_ref.match_id)
 
-    normalized = NormalizedStatsBombSample(
+    normalized = NormalizedStatsBombMatch(
         competitions=pd.DataFrame([_competition_row(competition)]),
         matches=pd.DataFrame([_match_row(match)]),
         teams=pd.DataFrame(_team_rows(match, lineups)).drop_duplicates("team_id"),
         players=pd.DataFrame(_player_rows(lineups)).drop_duplicates("player_id"),
-        lineups=pd.DataFrame(_lineup_rows(sample.match_id, lineups)),
-        player_positions=pd.DataFrame(_player_position_rows(sample.match_id, lineups)),
-        events=pd.DataFrame(_event_rows(sample.match_id, events)),
+        lineups=pd.DataFrame(_lineup_rows(match_ref.match_id, lineups)),
+        player_positions=pd.DataFrame(_player_position_rows(match_ref.match_id, lineups)),
+        events=pd.DataFrame(_event_rows(match_ref.match_id, events)),
         pass_events=pd.DataFrame(_pass_event_rows(events)),
     )
 
@@ -66,7 +77,7 @@ def normalize_sample(
     return normalized
 
 
-def normalized_tables(normalized: NormalizedStatsBombSample) -> dict[str, pd.DataFrame]:
+def normalized_tables(normalized: NormalizedStatsBombMatch) -> dict[str, pd.DataFrame]:
     return {
         "competitions": normalized.competitions,
         "matches": normalized.matches,
@@ -269,4 +280,3 @@ def _nested_id(data: dict[str, Any], key: str) -> int | None:
 def _nested_name(data: dict[str, Any], key: str) -> str | None:
     nested = data.get(key)
     return nested.get("name") if nested else None
-

@@ -31,10 +31,23 @@ ScoutGraph works with public football data sources and documents source-specific
 
 ## Current Commands
 
+List available StatsBomb competition-seasons and matches:
+
+```bash
+scoutgraph list statsbomb-competitions
+scoutgraph list statsbomb-matches --competition-id 9 --season-id 281
+```
+
 Fetch the starter StatsBomb sample:
 
 ```bash
 scoutgraph ingest statsbomb-sample
+```
+
+Fetch a specific StatsBomb match:
+
+```bash
+scoutgraph ingest statsbomb-match --competition-id 9 --season-id 281 --match-id 3895302
 ```
 
 Inspect the cached raw sample:
@@ -48,6 +61,12 @@ Normalize the sample into analytical tables:
 
 ```bash
 scoutgraph normalize statsbomb-sample
+```
+
+Normalize a specific StatsBomb match:
+
+```bash
+scoutgraph normalize statsbomb-match --competition-id 9 --season-id 281 --match-id 3895302
 ```
 
 ## Documentation
