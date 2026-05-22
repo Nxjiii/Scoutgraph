@@ -50,6 +50,12 @@ Fetch a specific StatsBomb match:
 scoutgraph ingest statsbomb-match --competition-id 9 --season-id 281 --match-id 3895302
 ```
 
+Fetch a limited StatsBomb season subset:
+
+```bash
+scoutgraph ingest statsbomb-season --competition-id 9 --season-id 281 --limit 2
+```
+
 Inspect the cached raw sample:
 
 ```bash
@@ -67,6 +73,12 @@ Normalize a specific StatsBomb match:
 
 ```bash
 scoutgraph normalize statsbomb-match --competition-id 9 --season-id 281 --match-id 3895302
+```
+
+Normalize a limited StatsBomb season subset:
+
+```bash
+scoutgraph normalize statsbomb-season --competition-id 9 --season-id 281 --limit 2
 ```
 
 Query normalized sample pass data:

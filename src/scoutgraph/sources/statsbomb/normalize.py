@@ -77,6 +77,66 @@ def normalize_match(
     return normalized
 
 
+def normalize_season(
+    client: StatsBombOpenDataClient,
+    *,
+    competition_id: int,
+    season_id: int,
+    limit: int | None = None,
+) -> NormalizedStatsBombMatch:
+    """Normalize cached matches for one StatsBomb competition-season."""
+    competitions = client.fetch_json("competitions.json")
+    matches = client.fetch_json(f"matches/{competition_id}/{season_id}.json")
+    selected_matches = matches[:limit] if limit is not None else matches
+
+    competition = client._find_competition(
+        competitions,
+        competition_id=competition_id,
+        season_id=season_id,
+    )
+
+    team_rows: list[dict[str, Any]] = []
+    player_rows: list[dict[str, Any]] = []
+    lineup_rows: list[dict[str, Any]] = []
+    player_position_rows: list[dict[str, Any]] = []
+    event_rows: list[dict[str, Any]] = []
+    pass_event_rows: list[dict[str, Any]] = []
+
+    for match in selected_matches:
+        match_id = match["match_id"]
+        events = client.fetch_json(f"events/{match_id}.json")
+        lineups = client.fetch_json(f"lineups/{match_id}.json")
+
+        team_rows.extend(_team_rows(match, lineups))
+        player_rows.extend(_player_rows(lineups))
+        lineup_rows.extend(_lineup_rows(match_id, lineups))
+        player_position_rows.extend(_player_position_rows(match_id, lineups))
+        event_rows.extend(_event_rows(match_id, events))
+        pass_event_rows.extend(_pass_event_rows(events))
+
+    normalized = NormalizedStatsBombMatch(
+        competitions=pd.DataFrame([_competition_row(competition)]),
+        matches=pd.DataFrame([_match_row(match) for match in selected_matches]).drop_duplicates(
+            "match_id"
+        ),
+        teams=pd.DataFrame(team_rows).drop_duplicates("team_id"),
+        players=pd.DataFrame(player_rows).drop_duplicates("player_id"),
+        lineups=pd.DataFrame(lineup_rows).drop_duplicates(["match_id", "team_id", "player_id"]),
+        player_positions=pd.DataFrame(player_position_rows).drop_duplicates(
+            ["match_id", "player_id", "position_id", "from_time"]
+        ),
+        events=pd.DataFrame(event_rows).drop_duplicates("event_id"),
+        pass_events=pd.DataFrame(pass_event_rows).drop_duplicates("event_id"),
+    )
+
+    output_root = client.paths.processed_data / "statsbomb"
+    output_root.mkdir(parents=True, exist_ok=True)
+    for table_name, table in normalized_tables(normalized).items():
+        table.to_parquet(output_root / f"{table_name}.parquet", index=False)
+
+    return normalized
+
+
 def normalized_tables(normalized: NormalizedStatsBombMatch) -> dict[str, pd.DataFrame]:
     return {
         "competitions": normalized.competitions,
