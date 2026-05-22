@@ -12,7 +12,7 @@ from scoutgraph.sources.statsbomb.discovery import (
     list_matches,
 )
 from scoutgraph.sources.statsbomb.inspect import format_raw_event, get_raw_event, inspect_sample
-from scoutgraph.sources.statsbomb.normalize import normalize_match, normalize_sample
+from scoutgraph.sources.statsbomb.normalize import normalize_match, normalize_sample, normalize_season
 from scoutgraph.storage.paths import ProjectPaths
 
 app = typer.Typer(help="Football data ingestion, inspection, normalization, and query tools.")
@@ -102,6 +102,36 @@ def ingest_statsbomb_match(
     typer.echo(f"match id: {summary.match_id}")
     typer.echo(f"events: {summary.event_count}")
     typer.echo(f"lineup teams: {summary.lineup_team_count}")
+
+
+@ingest_app.command("statsbomb-season")
+def ingest_statsbomb_season(
+    competition_id: Annotated[int, typer.Option(help="StatsBomb competition id.")],
+    season_id: Annotated[int, typer.Option(help="StatsBomb season id.")],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    limit: Annotated[
+        int | None,
+        typer.Option(help="Maximum number of matches to cache."),
+    ] = None,
+) -> None:
+    """Download raw files for a StatsBomb competition-season."""
+    paths = ProjectPaths.from_root(root)
+    client = StatsBombOpenDataClient(paths)
+    summary = client.fetch_season(
+        competition_id=competition_id,
+        season_id=season_id,
+        limit=limit,
+    )
+
+    typer.echo("StatsBomb season ready")
+    typer.echo(f"competition: {summary.competition_name} {summary.season_name}")
+    typer.echo(f"competition id: {summary.competition_id}")
+    typer.echo(f"season id: {summary.season_id}")
+    typer.echo(f"matches cached: {summary.match_count}")
+    typer.echo(f"match ids: {', '.join(str(match_id) for match_id in summary.match_ids)}")
 
 
 @inspect_app.command("statsbomb-sample")
@@ -219,6 +249,34 @@ def normalize_statsbomb_match(
     normalized = normalize_match(client, match_ref)
 
     typer.echo("Normalized StatsBomb match")
+    for table_name, count in normalized.counts().items():
+        typer.echo(f"{table_name}: {count}")
+
+
+@normalize_app.command("statsbomb-season")
+def normalize_statsbomb_season(
+    competition_id: Annotated[int, typer.Option(help="StatsBomb competition id.")],
+    season_id: Annotated[int, typer.Option(help="StatsBomb season id.")],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    limit: Annotated[
+        int | None,
+        typer.Option(help="Maximum number of matches to normalize."),
+    ] = None,
+) -> None:
+    """Normalize cached matches for one StatsBomb competition-season."""
+    paths = ProjectPaths.from_root(root)
+    client = StatsBombOpenDataClient(paths)
+    normalized = normalize_season(
+        client,
+        competition_id=competition_id,
+        season_id=season_id,
+        limit=limit,
+    )
+
+    typer.echo("Normalized StatsBomb season")
     for table_name, count in normalized.counts().items():
         typer.echo(f"{table_name}: {count}")
 

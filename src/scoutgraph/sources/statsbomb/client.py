@@ -40,6 +40,16 @@ class StatsBombMatchSummary:
     lineup_team_count: int
 
 
+@dataclass(frozen=True)
+class StatsBombSeasonSummary:
+    competition_name: str
+    season_name: str
+    competition_id: int
+    season_id: int
+    match_count: int
+    match_ids: list[int]
+
+
 class StatsBombOpenDataClient:
     """Download and inspect StatsBomb Open Data JSON files."""
 
@@ -79,6 +89,40 @@ class StatsBombOpenDataClient:
     def fetch_sample(self) -> StatsBombMatchSummary:
         """Download the starter sample and return a human-readable summary."""
         return self.fetch_match(DEFAULT_SAMPLE_MATCH)
+
+    def fetch_season(
+        self,
+        *,
+        competition_id: int,
+        season_id: int,
+        limit: int | None = None,
+    ) -> StatsBombSeasonSummary:
+        """Download raw event and lineup files for one competition-season."""
+        self.paths.ensure()
+
+        competitions = self.fetch_json("competitions.json")
+        matches = self.fetch_json(f"matches/{competition_id}/{season_id}.json")
+        selected_matches = matches[:limit] if limit is not None else matches
+
+        competition = self._find_competition(
+            competitions,
+            competition_id=competition_id,
+            season_id=season_id,
+        )
+
+        for match in selected_matches:
+            match_id = match["match_id"]
+            self.fetch_json(f"events/{match_id}.json")
+            self.fetch_json(f"lineups/{match_id}.json")
+
+        return StatsBombSeasonSummary(
+            competition_name=competition["competition_name"],
+            season_name=competition["season_name"],
+            competition_id=competition_id,
+            season_id=season_id,
+            match_count=len(selected_matches),
+            match_ids=[match["match_id"] for match in selected_matches],
+        )
 
     def fetch_json(self, relative_path: str) -> Any:
         """Load a StatsBomb JSON file from local cache or download it."""

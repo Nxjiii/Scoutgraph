@@ -109,6 +109,52 @@ def test_fetch_sample_uses_default_sample_match(tmp_path: Path) -> None:
     assert summary.match_id == DEFAULT_SAMPLE_MATCH.match_id
 
 
+def test_fetch_season_caches_limited_match_files(tmp_path: Path) -> None:
+    raw_root = tmp_path / "data" / "raw" / "statsbomb"
+    (raw_root / "matches" / "9").mkdir(parents=True)
+    (raw_root / "events").mkdir()
+    (raw_root / "lineups").mkdir()
+
+    (raw_root / "competitions.json").write_text(
+        """
+        [
+          {
+            "competition_id": 9,
+            "season_id": 281,
+            "competition_name": "1. Bundesliga",
+            "season_name": "2023/2024"
+          }
+        ]
+        """,
+        encoding="utf-8",
+    )
+    (raw_root / "matches" / "9" / "281.json").write_text(
+        """
+        [
+          {"match_id": 1},
+          {"match_id": 2},
+          {"match_id": 3}
+        ]
+        """,
+        encoding="utf-8",
+    )
+    (raw_root / "events" / "1.json").write_text("[]", encoding="utf-8")
+    (raw_root / "lineups" / "1.json").write_text("[]", encoding="utf-8")
+    (raw_root / "events" / "2.json").write_text("[]", encoding="utf-8")
+    (raw_root / "lineups" / "2.json").write_text("[]", encoding="utf-8")
+
+    summary = StatsBombOpenDataClient(ProjectPaths.from_root(tmp_path)).fetch_season(
+        competition_id=9,
+        season_id=281,
+        limit=2,
+    )
+
+    assert summary.competition_name == "1. Bundesliga"
+    assert summary.season_name == "2023/2024"
+    assert summary.match_count == 2
+    assert summary.match_ids == [1, 2]
+
+
 def test_statsbomb_sample_summary_raises_for_missing_match(tmp_path: Path) -> None:
     client = StatsBombOpenDataClient(ProjectPaths.from_root(tmp_path))
 
