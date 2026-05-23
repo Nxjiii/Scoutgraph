@@ -22,9 +22,28 @@ PASS_QUERY_COLUMNS = [
 
 def load_sample_passes(paths: ProjectPaths, limit: int = 10) -> pd.DataFrame:
     """Return readable pass rows from the normalized StatsBomb sample."""
+    return load_passes(paths, limit=limit)
+
+
+def load_passes(
+    paths: ProjectPaths,
+    *,
+    match_id: int | None = None,
+    team: str | None = None,
+    player: str | None = None,
+    limit: int = 10,
+) -> pd.DataFrame:
+    """Return readable pass rows from normalized StatsBomb tables."""
     processed_root = paths.processed_data / "statsbomb"
     events = _read_parquet(processed_root / "events.parquet")
     pass_events = _read_parquet(processed_root / "pass_events.parquet")
+
+    if match_id is not None:
+        events = events[events["match_id"] == match_id]
+    if team is not None:
+        events = events[events["team_name"].str.contains(team, case=False, na=False)]
+    if player is not None:
+        events = events[events["player_name"].str.contains(player, case=False, na=False)]
 
     passes = (
         events.merge(pass_events, on="event_id", how="inner")
@@ -63,4 +82,3 @@ def _format_location(x: float | None, y: float | None) -> str:
     if pd.isna(x) or pd.isna(y):
         return "[?, ?]"
     return f"[{x:.1f}, {y:.1f}]"
-

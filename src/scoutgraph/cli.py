@@ -2,7 +2,7 @@ from typing import Annotated
 
 import typer
 
-from scoutgraph.query.sample import format_passes, load_sample_passes
+from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
 from scoutgraph.sources.statsbomb.client import StatsBombMatchRef
 from scoutgraph.sources.statsbomb.discovery import (
@@ -297,6 +297,38 @@ def query_sample_passes(
     passes = load_sample_passes(paths, limit=limit)
 
     typer.echo("Sample passes")
+    for line in format_passes(passes):
+        typer.echo(line)
+
+
+@query_app.command("passes")
+def query_passes(
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    match_id: Annotated[
+        int | None,
+        typer.Option(help="Only show passes from this StatsBomb match id."),
+    ] = None,
+    team: Annotated[
+        str | None,
+        typer.Option(help="Only show passes by teams matching this text."),
+    ] = None,
+    player: Annotated[
+        str | None,
+        typer.Option(help="Only show passes by players matching this text."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of pass rows to show."),
+    ] = 10,
+) -> None:
+    """Show passes from normalized StatsBomb tables."""
+    paths = ProjectPaths.from_root(root)
+    passes = load_passes(paths, match_id=match_id, team=team, player=player, limit=limit)
+
+    typer.echo("Passes")
     for line in format_passes(passes):
         typer.echo(line)
 
