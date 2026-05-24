@@ -81,10 +81,12 @@ Normalize a limited StatsBomb season subset:
 scoutgraph normalize statsbomb-season --competition-id 9 --season-id 281 --limit 2
 ```
 
-Query normalized sample pass data:
+Query normalized pass data:
 
 ```bash
-scoutgraph query sample-passes --limit 5
+scoutgraph query passes --match-id 3895302 --limit 5
+scoutgraph query passes --match-id 3895302 --team "Bayer Leverkusen" --limit 5
+scoutgraph query passes --match-id 3895302 --player "Granit Xhaka" --limit 5
 ```
 
 ## Documentation
