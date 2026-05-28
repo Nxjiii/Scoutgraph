@@ -10,6 +10,10 @@ from scoutgraph.features.player_carrying import (
     build_player_carrying_features,
     format_player_carrying_features,
 )
+from scoutgraph.features.player_shooting import (
+    build_player_shooting_features,
+    format_player_shooting_features,
+)
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
 from scoutgraph.sources.statsbomb.client import StatsBombMatchRef
@@ -432,4 +436,28 @@ def features_player_carrying(
 
     typer.echo("Player carrying features")
     for line in format_player_carrying_features(features, limit=limit):
+        typer.echo(line)
+
+
+@features_app.command("player-shooting")
+def features_player_shooting(
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    match_id: Annotated[
+        int | None,
+        typer.Option(help="Only build features from this StatsBomb match id."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of player rows to print."),
+    ] = 10,
+) -> None:
+    """Build player shooting features from normalized StatsBomb tables."""
+    paths = ProjectPaths.from_root(root)
+    features = build_player_shooting_features(paths, match_id=match_id)
+
+    typer.echo("Player shooting features")
+    for line in format_player_shooting_features(features, limit=limit):
         typer.echo(line)

@@ -5,6 +5,7 @@ from scoutgraph.sources.statsbomb.normalize import (
     _event_row,
     _match_row,
     _pass_event_row,
+    _shot_event_row,
     normalize_season,
 )
 from scoutgraph.storage.paths import ProjectPaths
@@ -126,6 +127,31 @@ def test_carry_event_row_flattens_carry_specific_fields() -> None:
     assert row["end_location_x"] == 52.0
     assert row["end_location_y"] == 35.0
     assert round(row["carry_distance"], 2) == 13.0
+
+
+def test_shot_event_row_flattens_shot_specific_fields() -> None:
+    row = _shot_event_row(
+        {
+            "id": "shot-1",
+            "type": {"id": 16, "name": "Shot"},
+            "location": [108.0, 40.0],
+            "shot": {
+                "statsbomb_xg": 0.42,
+                "outcome": {"id": 97, "name": "Goal"},
+                "body_part": {"id": 40, "name": "Right Foot"},
+                "technique": {"id": 93, "name": "Normal"},
+                "end_location": [120.0, 40.0, 1.5],
+            },
+        }
+    )
+
+    assert row["event_id"] == "shot-1"
+    assert row["xg"] == 0.42
+    assert row["outcome_name"] == "Goal"
+    assert row["body_part_name"] == "Right Foot"
+    assert row["technique_name"] == "Normal"
+    assert row["end_location_z"] == 1.5
+    assert row["shot_distance"] == 12.0
 
 
 def test_normalize_season_combines_matches_and_dedupes_dimensions(tmp_path: Path) -> None:

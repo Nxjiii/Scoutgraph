@@ -21,6 +21,7 @@ class NormalizedStatsBombMatch:
     events: pd.DataFrame
     pass_events: pd.DataFrame
     carry_events: pd.DataFrame
+    shot_events: pd.DataFrame
 
     def counts(self) -> dict[str, int]:
         return {
@@ -33,6 +34,7 @@ class NormalizedStatsBombMatch:
             "events": len(self.events),
             "pass_events": len(self.pass_events),
             "carry_events": len(self.carry_events),
+            "shot_events": len(self.shot_events),
         }
 
 
@@ -70,6 +72,7 @@ def normalize_match(
         events=pd.DataFrame(_event_rows(match_ref.match_id, events)),
         pass_events=pd.DataFrame(_pass_event_rows(events)),
         carry_events=pd.DataFrame(_carry_event_rows(events)),
+        shot_events=pd.DataFrame(_shot_event_rows(events)),
     )
 
     output_root = client.paths.processed_data / "statsbomb"
@@ -105,6 +108,7 @@ def normalize_season(
     event_rows: list[dict[str, Any]] = []
     pass_event_rows: list[dict[str, Any]] = []
     carry_event_rows: list[dict[str, Any]] = []
+    shot_event_rows: list[dict[str, Any]] = []
 
     for match in selected_matches:
         match_id = match["match_id"]
@@ -118,6 +122,7 @@ def normalize_season(
         event_rows.extend(_event_rows(match_id, events))
         pass_event_rows.extend(_pass_event_rows(events))
         carry_event_rows.extend(_carry_event_rows(events))
+        shot_event_rows.extend(_shot_event_rows(events))
 
     normalized = NormalizedStatsBombMatch(
         competitions=pd.DataFrame([_competition_row(competition)]),
@@ -133,6 +138,7 @@ def normalize_season(
         events=pd.DataFrame(event_rows).drop_duplicates("event_id"),
         pass_events=pd.DataFrame(pass_event_rows).drop_duplicates("event_id"),
         carry_events=pd.DataFrame(carry_event_rows).drop_duplicates("event_id"),
+        shot_events=pd.DataFrame(shot_event_rows).drop_duplicates("event_id"),
     )
 
     output_root = client.paths.processed_data / "statsbomb"
@@ -154,6 +160,7 @@ def normalized_tables(normalized: NormalizedStatsBombMatch) -> dict[str, pd.Data
         "events": normalized.events,
         "pass_events": normalized.pass_events,
         "carry_events": normalized.carry_events,
+        "shot_events": normalized.shot_events,
     }
 
 
@@ -358,6 +365,36 @@ def _carry_event_row(event: dict[str, Any]) -> dict[str, Any]:
         "end_location_x": end_location[0],
         "end_location_y": end_location[1],
         "carry_distance": _distance(start_location, end_location),
+    }
+
+
+def _shot_event_rows(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows = []
+    for event in events:
+        if event["type"]["name"] != "Shot":
+            continue
+        rows.append(_shot_event_row(event))
+    return rows
+
+
+def _shot_event_row(event: dict[str, Any]) -> dict[str, Any]:
+    shot_data = event["shot"]
+    start_location = event.get("location") or [None, None]
+    end_location = shot_data.get("end_location") or [None, None, None]
+
+    return {
+        "event_id": event["id"],
+        "xg": shot_data.get("statsbomb_xg"),
+        "outcome_id": _nested_id(shot_data, "outcome"),
+        "outcome_name": _nested_name(shot_data, "outcome"),
+        "body_part_id": _nested_id(shot_data, "body_part"),
+        "body_part_name": _nested_name(shot_data, "body_part"),
+        "technique_id": _nested_id(shot_data, "technique"),
+        "technique_name": _nested_name(shot_data, "technique"),
+        "end_location_x": end_location[0],
+        "end_location_y": end_location[1],
+        "end_location_z": end_location[2] if len(end_location) > 2 else None,
+        "shot_distance": _distance(start_location, [120.0, 40.0]),
     }
 
 
