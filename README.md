@@ -101,6 +101,12 @@ Build player carrying features:
 scoutgraph features player-carrying --match-id 3895302 --limit 10
 ```
 
+Build player shooting features:
+
+```bash
+scoutgraph features player-shooting --match-id 3895302 --limit 10
+```
+
 ## Documentation
 
 Longer methodology, architecture, and setup guides will be added as the backend takes shape.
