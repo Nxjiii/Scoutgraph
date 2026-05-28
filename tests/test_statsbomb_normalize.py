@@ -1,6 +1,12 @@
 from pathlib import Path
 
-from scoutgraph.sources.statsbomb.normalize import _event_row, _match_row, _pass_event_row, normalize_season
+from scoutgraph.sources.statsbomb.normalize import (
+    _carry_event_row,
+    _event_row,
+    _match_row,
+    _pass_event_row,
+    normalize_season,
+)
 from scoutgraph.storage.paths import ProjectPaths
 
 
@@ -104,6 +110,22 @@ def test_pass_event_row_flattens_pass_specific_fields() -> None:
         "outcome_id": None,
         "outcome_name": "Complete",
     }
+
+
+def test_carry_event_row_flattens_carry_specific_fields() -> None:
+    row = _carry_event_row(
+        {
+            "id": "carry-1",
+            "type": {"id": 43, "name": "Carry"},
+            "location": [40.0, 30.0],
+            "carry": {"end_location": [52.0, 35.0]},
+        }
+    )
+
+    assert row["event_id"] == "carry-1"
+    assert row["end_location_x"] == 52.0
+    assert row["end_location_y"] == 35.0
+    assert round(row["carry_distance"], 2) == 13.0
 
 
 def test_normalize_season_combines_matches_and_dedupes_dimensions(tmp_path: Path) -> None:
