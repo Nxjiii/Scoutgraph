@@ -2,6 +2,10 @@ from typing import Annotated
 
 import typer
 
+from scoutgraph.features.player_passing import (
+    build_player_passing_features,
+    format_player_passing_features,
+)
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
 from scoutgraph.sources.statsbomb.client import StatsBombMatchRef
@@ -21,11 +25,13 @@ inspect_app = typer.Typer(help="Inspect cached raw football data.")
 normalize_app = typer.Typer(help="Convert cached raw data into analytical tables.")
 query_app = typer.Typer(help="Query normalized ScoutGraph tables.")
 list_app = typer.Typer(help="Discover available source competitions and matches.")
+features_app = typer.Typer(help="Build derived player and team feature tables.")
 app.add_typer(ingest_app, name="ingest")
 app.add_typer(inspect_app, name="inspect")
 app.add_typer(normalize_app, name="normalize")
 app.add_typer(query_app, name="query")
 app.add_typer(list_app, name="list")
+app.add_typer(features_app, name="features")
 
 
 @app.callback()
@@ -375,3 +381,27 @@ def list_statsbomb_matches(
     typer.echo("StatsBomb matches")
     for option in options[:limit]:
         typer.echo(format_match_option(option))
+
+
+@features_app.command("player-passing")
+def features_player_passing(
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    match_id: Annotated[
+        int | None,
+        typer.Option(help="Only build features from this StatsBomb match id."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of player rows to print."),
+    ] = 10,
+) -> None:
+    """Build player passing features from normalized StatsBomb tables."""
+    paths = ProjectPaths.from_root(root)
+    features = build_player_passing_features(paths, match_id=match_id)
+
+    typer.echo("Player passing features")
+    for line in format_player_passing_features(features, limit=limit):
+        typer.echo(line)
