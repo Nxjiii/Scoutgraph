@@ -89,6 +89,12 @@ scoutgraph query passes --match-id 3895302 --team "Bayer Leverkusen" --limit 5
 scoutgraph query passes --match-id 3895302 --player "Granit Xhaka" --limit 5
 ```
 
+Build player passing features:
+
+```bash
+scoutgraph features player-passing --match-id 3895302 --limit 10
+```
+
 ## Documentation
 
 Longer methodology, architecture, and setup guides will be added as the backend takes shape.
