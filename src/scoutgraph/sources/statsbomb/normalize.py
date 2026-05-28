@@ -20,6 +20,7 @@ class NormalizedStatsBombMatch:
     player_positions: pd.DataFrame
     events: pd.DataFrame
     pass_events: pd.DataFrame
+    carry_events: pd.DataFrame
 
     def counts(self) -> dict[str, int]:
         return {
@@ -31,6 +32,7 @@ class NormalizedStatsBombMatch:
             "player_positions": len(self.player_positions),
             "events": len(self.events),
             "pass_events": len(self.pass_events),
+            "carry_events": len(self.carry_events),
         }
 
 
@@ -67,6 +69,7 @@ def normalize_match(
         player_positions=pd.DataFrame(_player_position_rows(match_ref.match_id, lineups)),
         events=pd.DataFrame(_event_rows(match_ref.match_id, events)),
         pass_events=pd.DataFrame(_pass_event_rows(events)),
+        carry_events=pd.DataFrame(_carry_event_rows(events)),
     )
 
     output_root = client.paths.processed_data / "statsbomb"
@@ -101,6 +104,7 @@ def normalize_season(
     player_position_rows: list[dict[str, Any]] = []
     event_rows: list[dict[str, Any]] = []
     pass_event_rows: list[dict[str, Any]] = []
+    carry_event_rows: list[dict[str, Any]] = []
 
     for match in selected_matches:
         match_id = match["match_id"]
@@ -113,6 +117,7 @@ def normalize_season(
         player_position_rows.extend(_player_position_rows(match_id, lineups))
         event_rows.extend(_event_rows(match_id, events))
         pass_event_rows.extend(_pass_event_rows(events))
+        carry_event_rows.extend(_carry_event_rows(events))
 
     normalized = NormalizedStatsBombMatch(
         competitions=pd.DataFrame([_competition_row(competition)]),
@@ -127,6 +132,7 @@ def normalize_season(
         ),
         events=pd.DataFrame(event_rows).drop_duplicates("event_id"),
         pass_events=pd.DataFrame(pass_event_rows).drop_duplicates("event_id"),
+        carry_events=pd.DataFrame(carry_event_rows).drop_duplicates("event_id"),
     )
 
     output_root = client.paths.processed_data / "statsbomb"
@@ -147,6 +153,7 @@ def normalized_tables(normalized: NormalizedStatsBombMatch) -> dict[str, pd.Data
         "player_positions": normalized.player_positions,
         "events": normalized.events,
         "pass_events": normalized.pass_events,
+        "carry_events": normalized.carry_events,
     }
 
 
@@ -330,6 +337,36 @@ def _pass_event_row(event: dict[str, Any]) -> dict[str, Any]:
         "outcome_id": outcome.get("id") if outcome else None,
         "outcome_name": outcome.get("name") if outcome else "Complete",
     }
+
+
+def _carry_event_rows(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows = []
+    for event in events:
+        if event["type"]["name"] != "Carry":
+            continue
+        rows.append(_carry_event_row(event))
+    return rows
+
+
+def _carry_event_row(event: dict[str, Any]) -> dict[str, Any]:
+    carry_data = event["carry"]
+    start_location = event.get("location") or [None, None]
+    end_location = carry_data.get("end_location") or [None, None]
+
+    return {
+        "event_id": event["id"],
+        "end_location_x": end_location[0],
+        "end_location_y": end_location[1],
+        "carry_distance": _distance(start_location, end_location),
+    }
+
+
+def _distance(start_location: list[float | None], end_location: list[float | None]) -> float | None:
+    start_x, start_y = start_location
+    end_x, end_y = end_location
+    if start_x is None or start_y is None or end_x is None or end_y is None:
+        return None
+    return ((end_x - start_x) ** 2 + (end_y - start_y) ** 2) ** 0.5
 
 
 def _nested_id(data: dict[str, Any], key: str) -> int | None:
