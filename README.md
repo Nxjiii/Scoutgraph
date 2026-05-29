@@ -107,6 +107,12 @@ Build player shooting features:
 scoutgraph features player-shooting --match-id 3895302 --limit 10
 ```
 
+Build the combined player feature matrix:
+
+```bash
+scoutgraph features player-matrix --match-id 3895302 --limit 10
+```
+
 ## Documentation
 
 Longer methodology, architecture, and setup guides will be added as the backend takes shape.
