@@ -14,6 +14,10 @@ from scoutgraph.features.player_shooting import (
     build_player_shooting_features,
     format_player_shooting_features,
 )
+from scoutgraph.features.player_matrix import (
+    build_player_feature_matrix,
+    format_player_feature_matrix,
+)
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
 from scoutgraph.sources.statsbomb.client import StatsBombMatchRef
@@ -460,4 +464,28 @@ def features_player_shooting(
 
     typer.echo("Player shooting features")
     for line in format_player_shooting_features(features, limit=limit):
+        typer.echo(line)
+
+
+@features_app.command("player-matrix")
+def features_player_matrix(
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    match_id: Annotated[
+        int | None,
+        typer.Option(help="Only build features from this StatsBomb match id."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of player rows to print."),
+    ] = 10,
+) -> None:
+    """Build a combined player feature matrix."""
+    paths = ProjectPaths.from_root(root)
+    matrix = build_player_feature_matrix(paths, match_id=match_id)
+
+    typer.echo("Player feature matrix")
+    for line in format_player_feature_matrix(matrix, limit=limit):
         typer.echo(line)
