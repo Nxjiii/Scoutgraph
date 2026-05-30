@@ -1,0 +1,1 @@
+"""Similarity tools for ScoutGraph."""
