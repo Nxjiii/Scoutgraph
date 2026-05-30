@@ -113,6 +113,12 @@ Build the combined player feature matrix:
 scoutgraph features player-matrix --match-id 3895302 --limit 10
 ```
 
+Find similar players from the generated feature matrix:
+
+```bash
+scoutgraph similarity players --player "Granit Xhaka" --limit 5
+```
+
 ## Documentation
 
 Longer methodology, architecture, and setup guides will be added as the backend takes shape.

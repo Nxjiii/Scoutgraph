@@ -19,6 +19,7 @@ from scoutgraph.features.player_matrix import (
     format_player_feature_matrix,
 )
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
+from scoutgraph.similarity.player_similarity import find_similar_players, format_similar_players
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
 from scoutgraph.sources.statsbomb.client import StatsBombMatchRef
 from scoutgraph.sources.statsbomb.discovery import (
@@ -38,12 +39,14 @@ normalize_app = typer.Typer(help="Convert cached raw data into analytical tables
 query_app = typer.Typer(help="Query normalized ScoutGraph tables.")
 list_app = typer.Typer(help="Discover available source competitions and matches.")
 features_app = typer.Typer(help="Build derived player and team feature tables.")
+similarity_app = typer.Typer(help="Find similar players and teams from feature tables.")
 app.add_typer(ingest_app, name="ingest")
 app.add_typer(inspect_app, name="inspect")
 app.add_typer(normalize_app, name="normalize")
 app.add_typer(query_app, name="query")
 app.add_typer(list_app, name="list")
 app.add_typer(features_app, name="features")
+app.add_typer(similarity_app, name="similarity")
 
 
 @app.callback()
@@ -488,4 +491,28 @@ def features_player_matrix(
 
     typer.echo("Player feature matrix")
     for line in format_player_feature_matrix(matrix, limit=limit):
+        typer.echo(line)
+
+
+@similarity_app.command("players")
+def similarity_players(
+    player: Annotated[
+        str,
+        typer.Option(help="Player name or partial player name to compare from."),
+    ],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of similar players to print."),
+    ] = 5,
+) -> None:
+    """Find players with similar feature profiles."""
+    paths = ProjectPaths.from_root(root)
+    players = find_similar_players(paths, player=player, limit=limit)
+
+    typer.echo(f"Similar players to {player}")
+    for line in format_similar_players(players, limit=limit):
         typer.echo(line)
