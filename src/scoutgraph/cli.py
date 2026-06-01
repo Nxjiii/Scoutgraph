@@ -18,6 +18,7 @@ from scoutgraph.features.player_matrix import (
     build_player_feature_matrix,
     format_player_feature_matrix,
 )
+from scoutgraph.features.team_matrix import build_team_feature_matrix, format_team_feature_matrix
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
 from scoutgraph.similarity.player_similarity import find_similar_players, format_similar_players
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
@@ -491,6 +492,30 @@ def features_player_matrix(
 
     typer.echo("Player feature matrix")
     for line in format_player_feature_matrix(matrix, limit=limit):
+        typer.echo(line)
+
+
+@features_app.command("team-matrix")
+def features_team_matrix(
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+    match_id: Annotated[
+        int | None,
+        typer.Option(help="Only build features from this StatsBomb match id."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option(help="Number of team rows to print."),
+    ] = 10,
+) -> None:
+    """Build a combined team feature matrix."""
+    paths = ProjectPaths.from_root(root)
+    matrix = build_team_feature_matrix(paths, match_id=match_id)
+
+    typer.echo("Team feature matrix")
+    for line in format_team_feature_matrix(matrix, limit=limit):
         typer.echo(line)
 
 
