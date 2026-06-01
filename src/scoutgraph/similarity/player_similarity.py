@@ -3,6 +3,7 @@ import math
 import pandas as pd
 
 from scoutgraph.features.player_matrix import PLAYER_ID_COLUMNS
+from scoutgraph.similarity.player_positions import load_player_position_groups
 from scoutgraph.storage.paths import ProjectPaths
 
 
@@ -15,9 +16,12 @@ def find_similar_players(
     *,
     player: str,
     limit: int = 5,
+    same_position: bool = False,
 ) -> pd.DataFrame:
     """Find players with the most similar normalized feature profiles."""
     matrix = load_player_feature_matrix(paths)
+    if same_position:
+        matrix = _filter_same_position_group(matrix, paths=paths, player=player)
     target_index = _find_player_index(matrix, player)
     metric_columns = _numeric_metric_columns(matrix)
     vectors = _standardize(matrix[metric_columns])
@@ -67,6 +71,22 @@ def _find_player_index(matrix: pd.DataFrame, player: str) -> int:
 def _numeric_metric_columns(matrix: pd.DataFrame) -> list[str]:
     numeric_columns = matrix.select_dtypes(include="number").columns.tolist()
     return [column for column in numeric_columns if column not in {"player_id", "team_id"}]
+
+
+def _filter_same_position_group(
+    matrix: pd.DataFrame,
+    *,
+    paths: ProjectPaths,
+    player: str,
+) -> pd.DataFrame:
+    position_groups = load_player_position_groups(paths)
+    matrix = matrix.merge(position_groups, on=["player_id", "team_id"], how="left")
+    target_index = _find_player_index(matrix, player)
+    target_position_group = matrix.loc[target_index, "position_group"]
+    if pd.isna(target_position_group):
+        msg = f"No position group found for player matching {player!r}."
+        raise ValueError(msg)
+    return matrix[matrix["position_group"] == target_position_group].reset_index(drop=True)
 
 
 def _standardize(metrics: pd.DataFrame) -> pd.DataFrame:

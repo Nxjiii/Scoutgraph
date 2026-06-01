@@ -77,6 +77,54 @@ def test_find_similar_players_raises_for_missing_player(tmp_path: Path) -> None:
         find_similar_players(ProjectPaths.from_root(tmp_path), player="Saka")
 
 
+def test_find_similar_players_can_filter_to_same_position_group(tmp_path: Path) -> None:
+    processed_root = tmp_path / "data" / "processed" / "statsbomb"
+    processed_root.mkdir(parents=True)
+    pd.DataFrame(
+        [
+            {
+                "player_id": 1,
+                "player_name": "Granit Xhaka",
+                "team_id": 10,
+                "team_name": "Bayer Leverkusen",
+                "passes_attempted": 100,
+                "progressive_passes": 20,
+            },
+            {
+                "player_id": 2,
+                "player_name": "Jonathan Tah",
+                "team_id": 10,
+                "team_name": "Bayer Leverkusen",
+                "passes_attempted": 99,
+                "progressive_passes": 19,
+            },
+            {
+                "player_id": 3,
+                "player_name": "Robert Andrich",
+                "team_id": 10,
+                "team_name": "Bayer Leverkusen",
+                "passes_attempted": 80,
+                "progressive_passes": 15,
+            },
+        ]
+    ).to_parquet(processed_root / "player_features.parquet", index=False)
+    pd.DataFrame(
+        [
+            {"player_id": 1, "team_id": 10, "position_id": 9},
+            {"player_id": 2, "team_id": 10, "position_id": 4},
+            {"player_id": 3, "team_id": 10, "position_id": 11},
+        ]
+    ).to_parquet(processed_root / "player_positions.parquet", index=False)
+
+    players = find_similar_players(
+        ProjectPaths.from_root(tmp_path),
+        player="Xhaka",
+        same_position=True,
+    )
+
+    assert players["player_name"].tolist() == ["Robert Andrich"]
+
+
 def test_load_player_feature_matrix_raises_when_missing(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError, match="Player feature matrix not found"):
         load_player_feature_matrix(ProjectPaths.from_root(tmp_path))

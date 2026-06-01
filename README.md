@@ -119,6 +119,12 @@ Find similar players from the generated feature matrix:
 scoutgraph similarity players --player "Granit Xhaka" --limit 5
 ```
 
+Limit similarity results to the same broad position group:
+
+```bash
+scoutgraph similarity players --player "Granit Xhaka" --same-position --limit 5
+```
+
 ## Documentation
 
 Longer methodology, architecture, and setup guides will be added as the backend takes shape.
