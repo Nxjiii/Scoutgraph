@@ -508,10 +508,19 @@ def similarity_players(
         int,
         typer.Option(help="Number of similar players to print."),
     ] = 5,
+    same_position: Annotated[
+        bool,
+        typer.Option(help="Only compare players in the same broad position group."),
+    ] = False,
 ) -> None:
     """Find players with similar feature profiles."""
     paths = ProjectPaths.from_root(root)
-    players = find_similar_players(paths, player=player, limit=limit)
+    players = find_similar_players(
+        paths,
+        player=player,
+        limit=limit,
+        same_position=same_position,
+    )
 
     typer.echo(f"Similar players to {player}")
     for line in format_similar_players(players, limit=limit):
