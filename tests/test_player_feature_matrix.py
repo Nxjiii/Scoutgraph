@@ -74,9 +74,18 @@ def test_build_player_feature_matrix_joins_feature_groups_and_fills_missing_valu
             ]
         )
 
+    def fake_minutes(paths, *, match_id=None):
+        return pd.DataFrame(
+            [
+                {"player_id": 100, "team_id": 10, "minutes_played": 90.0},
+                {"player_id": 200, "team_id": 10, "minutes_played": 45.0},
+            ]
+        )
+
     monkeypatch.setattr(player_matrix, "build_player_passing_features", fake_passing)
     monkeypatch.setattr(player_matrix, "build_player_carrying_features", fake_carrying)
     monkeypatch.setattr(player_matrix, "build_player_shooting_features", fake_shooting)
+    monkeypatch.setattr(player_matrix, "build_player_minutes", fake_minutes)
 
     matrix = build_player_feature_matrix(ProjectPaths.from_root(tmp_path), match_id=3895302)
 
@@ -84,9 +93,11 @@ def test_build_player_feature_matrix_joins_feature_groups_and_fills_missing_valu
     xhaka = matrix[matrix["player_name"] == "Granit Xhaka"].iloc[0]
     wirtz = matrix[matrix["player_name"] == "Florian Wirtz"].iloc[0]
     assert xhaka["passes_attempted"] == 85
+    assert xhaka["passes_attempted_per_90"] == 85
     assert xhaka["shots"] == 0
     assert wirtz["passes_attempted"] == 0
     assert wirtz["shots"] == 5
+    assert wirtz["shots_per_90"] == 10
     assert (tmp_path / "data" / "processed" / "statsbomb" / "player_features.parquet").exists()
 
 
@@ -97,6 +108,7 @@ def test_format_player_feature_matrix_returns_readable_lines() -> None:
                 {
                     "player_name": "Granit Xhaka",
                     "team_name": "Bayer Leverkusen",
+                    "minutes_played": 90.0,
                     "passes_attempted": 85,
                     "carries": 76,
                     "shots": 3,
@@ -105,6 +117,7 @@ def test_format_player_feature_matrix_returns_readable_lines() -> None:
                 {
                     "player_name": "Florian Wirtz",
                     "team_name": "Bayer Leverkusen",
+                    "minutes_played": 45.0,
                     "passes_attempted": 40,
                     "carries": 50,
                     "shots": 1,
@@ -115,6 +128,8 @@ def test_format_player_feature_matrix_returns_readable_lines() -> None:
     )
 
     assert lines == [
-        "Granit Xhaka | Bayer Leverkusen | 85 passes | 76 carries | 3 shots | 0.103 xG",
-        "Florian Wirtz | Bayer Leverkusen | 40 passes | 50 carries | 1 shot | 0.421 xG",
+        "Granit Xhaka | Bayer Leverkusen | 90.0 minutes | "
+        "85 passes | 76 carries | 3 shots | 0.103 xG",
+        "Florian Wirtz | Bayer Leverkusen | 45.0 minutes | "
+        "40 passes | 50 carries | 1 shot | 0.421 xG",
     ]

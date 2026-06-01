@@ -113,6 +113,9 @@ Build the combined player feature matrix:
 scoutgraph features player-matrix --match-id 3895302 --limit 10
 ```
 
+The combined matrix includes minutes played and per-90 versions of volume metrics for fairer
+player comparisons.
+
 Find similar players from the generated feature matrix:
 
 ```bash
