@@ -9,6 +9,12 @@ from scoutgraph.storage.paths import ProjectPaths
 
 PLAYER_FEATURE_MATRIX_PATH = "statsbomb/player_features.parquet"
 SIMILARITY_ID_COLUMNS = PLAYER_ID_COLUMNS
+RATE_METRIC_COLUMNS = {
+    "pass_completion_pct",
+    "avg_pass_length",
+    "avg_carry_distance",
+    "avg_shot_distance",
+}
 
 
 def find_similar_players(
@@ -70,7 +76,11 @@ def _find_player_index(matrix: pd.DataFrame, player: str) -> int:
 
 def _numeric_metric_columns(matrix: pd.DataFrame) -> list[str]:
     numeric_columns = matrix.select_dtypes(include="number").columns.tolist()
-    return [column for column in numeric_columns if column not in {"player_id", "team_id"}]
+    return [
+        column
+        for column in numeric_columns
+        if column.endswith("_per_90") or column in RATE_METRIC_COLUMNS
+    ]
 
 
 def _filter_same_position_group(
