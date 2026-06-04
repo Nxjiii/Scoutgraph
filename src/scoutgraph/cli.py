@@ -25,7 +25,12 @@ from scoutgraph.features.sanity import (
     inspect_team_vector,
 )
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
-from scoutgraph.similarity.player_similarity import find_similar_players, format_similar_players
+from scoutgraph.similarity.player_similarity import (
+    explain_similar_players,
+    find_similar_players,
+    format_similar_players,
+    format_similar_players_with_explanations,
+)
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
 from scoutgraph.sources.statsbomb.client import StatsBombMatchRef
 from scoutgraph.sources.statsbomb.discovery import (
@@ -576,6 +581,10 @@ def similarity_players(
         bool,
         typer.Option(help="Only compare players in the same broad position group."),
     ] = False,
+    explain: Annotated[
+        bool,
+        typer.Option(help="Show shared traits and key differences for each result."),
+    ] = False,
 ) -> None:
     """Find players with similar feature profiles."""
     paths = ProjectPaths.from_root(root)
@@ -587,5 +596,15 @@ def similarity_players(
     )
 
     typer.echo(f"Similar players to {player}")
-    for line in format_similar_players(players, limit=limit):
+    if explain:
+        explanations = explain_similar_players(paths, player=player, players=players)
+        lines = format_similar_players_with_explanations(
+            players,
+            limit=limit,
+            explanations=explanations,
+        )
+    else:
+        lines = format_similar_players(players, limit=limit)
+
+    for line in lines:
         typer.echo(line)

@@ -3,6 +3,11 @@ import math
 import pandas as pd
 
 from scoutgraph.features.player_matrix import PLAYER_ID_COLUMNS
+from scoutgraph.similarity.explanations import (
+    SimilarityExplanation,
+    explain_player_similarity,
+    format_similarity_explanation,
+)
 from scoutgraph.similarity.player_positions import load_player_position_groups
 from scoutgraph.storage.paths import ProjectPaths
 
@@ -57,12 +62,43 @@ def load_player_feature_matrix(paths: ProjectPaths) -> pd.DataFrame:
 
 
 def format_similar_players(players: pd.DataFrame, *, limit: int = 5) -> list[str]:
+    return format_similar_players_with_explanations(players, limit=limit)
+
+
+def explain_similar_players(
+    paths: ProjectPaths,
+    *,
+    player: str,
+    players: pd.DataFrame,
+) -> dict[str, SimilarityExplanation]:
+    """Explain each returned similar player against the selected player."""
+    matrix = load_player_feature_matrix(paths)
+    return {
+        str(row["player_name"]): explain_player_similarity(
+            matrix,
+            player=player,
+            compared_player=str(row["player_name"]),
+        )
+        for _, row in players.iterrows()
+    }
+
+
+def format_similar_players_with_explanations(
+    players: pd.DataFrame,
+    *,
+    limit: int = 5,
+    explanations: dict[str, SimilarityExplanation] | None = None,
+) -> list[str]:
     lines = []
     for _, row in players.head(limit).iterrows():
+        player_name = str(row["player_name"])
         lines.append(
-            f"{row['player_name']} | {row['team_name']} | "
+            f"{player_name} | {row['team_name']} | "
             f"similarity {row['similarity']:.3f}"
         )
+        if explanations is None:
+            continue
+        lines.extend(format_similarity_explanation(explanations[player_name]))
     return lines
 
 
