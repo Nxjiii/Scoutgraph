@@ -19,6 +19,11 @@ from scoutgraph.features.player_matrix import (
     format_player_feature_matrix,
 )
 from scoutgraph.features.team_matrix import build_team_feature_matrix, format_team_feature_matrix
+from scoutgraph.features.sanity import (
+    format_feature_inspection,
+    inspect_player_vector,
+    inspect_team_vector,
+)
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
 from scoutgraph.similarity.player_similarity import find_similar_players, format_similar_players
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
@@ -231,6 +236,40 @@ def inspect_statsbomb_event(
     )
 
     typer.echo(format_raw_event(event))
+
+
+@inspect_app.command("player-vector")
+def inspect_player_feature_vector(
+    player: Annotated[
+        str,
+        typer.Option(help="Player name or unique partial player name to inspect."),
+    ],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+) -> None:
+    """Inspect one generated player feature vector."""
+    inspection = inspect_player_vector(ProjectPaths.from_root(root), player=player)
+    for line in format_feature_inspection(inspection):
+        typer.echo(line)
+
+
+@inspect_app.command("team-vector")
+def inspect_team_feature_vector(
+    team: Annotated[
+        str,
+        typer.Option(help="Team name or unique partial team name to inspect."),
+    ],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+) -> None:
+    """Inspect one generated team feature vector."""
+    inspection = inspect_team_vector(ProjectPaths.from_root(root), team=team)
+    for line in format_feature_inspection(inspection):
+        typer.echo(line)
 
 
 @normalize_app.command("statsbomb-sample")

@@ -122,6 +122,13 @@ Build the combined team feature matrix:
 scoutgraph features team-matrix --match-id 3895302
 ```
 
+Inspect generated player and team vectors for suspicious feature values:
+
+```bash
+scoutgraph inspect player-vector --player "Granit Xhaka"
+scoutgraph inspect team-vector --team "Bayer Leverkusen"
+```
+
 Find similar players from the generated feature matrix:
 
 ```bash
