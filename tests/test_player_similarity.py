@@ -4,8 +4,10 @@ import pandas as pd
 import pytest
 
 from scoutgraph.similarity.player_similarity import (
+    explain_similar_players,
     find_similar_players,
     format_similar_players,
+    format_similar_players_with_explanations,
     load_player_feature_matrix,
 )
 from scoutgraph.storage.paths import ProjectPaths
@@ -144,3 +146,52 @@ def test_format_similar_players_returns_readable_lines() -> None:
     )
 
     assert lines == ["Robert Andrich | Bayer Leverkusen | similarity 0.932"]
+
+
+def test_format_similar_players_can_include_explanations(tmp_path: Path) -> None:
+    processed_root = tmp_path / "data" / "processed" / "statsbomb"
+    processed_root.mkdir(parents=True)
+    pd.DataFrame(
+        [
+            {
+                "player_id": 1,
+                "player_name": "Granit Xhaka",
+                "team_id": 10,
+                "team_name": "Bayer Leverkusen",
+                "passes_attempted_per_90": 100,
+                "carries_per_90": 40,
+            },
+            {
+                "player_id": 2,
+                "player_name": "Robert Andrich",
+                "team_id": 10,
+                "team_name": "Bayer Leverkusen",
+                "passes_attempted_per_90": 96,
+                "carries_per_90": 20,
+            },
+        ]
+    ).to_parquet(processed_root / "player_features.parquet", index=False)
+    players = pd.DataFrame(
+        [
+            {
+                "player_name": "Robert Andrich",
+                "team_name": "Bayer Leverkusen",
+                "similarity": 0.932,
+            }
+        ]
+    )
+
+    explanations = explain_similar_players(
+        ProjectPaths.from_root(tmp_path),
+        player="Xhaka",
+        players=players,
+    )
+    lines = format_similar_players_with_explanations(players, explanations=explanations)
+
+    assert lines == [
+        "Robert Andrich | Bayer Leverkusen | similarity 0.932",
+        "  Shared traits:",
+        "  - similar pass volume",
+        "  Differences:",
+        "  - Granit Xhaka has higher carry volume",
+    ]
