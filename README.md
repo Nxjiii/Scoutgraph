@@ -141,7 +141,7 @@ Limit similarity results to the same broad position group:
 scoutgraph similarity players --player "Granit Xhaka" --same-position --limit 5
 ```
 
-Show shared traits and key differences for similar players:
+Show shared traits, key differences, confidence, and limitations for similar players:
 
 ```bash
 scoutgraph similarity players --player "Granit Xhaka" --same-position --explain --limit 5

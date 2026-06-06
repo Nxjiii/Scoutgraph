@@ -26,6 +26,7 @@ from scoutgraph.features.sanity import (
 )
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
 from scoutgraph.similarity.player_similarity import (
+    evaluate_similar_player_confidence,
     explain_similar_players,
     find_similar_players,
     format_similar_players,
@@ -598,10 +599,17 @@ def similarity_players(
     typer.echo(f"Similar players to {player}")
     if explain:
         explanations = explain_similar_players(paths, player=player, players=players)
+        confidence = evaluate_similar_player_confidence(
+            paths,
+            player=player,
+            players=players,
+            same_position=same_position,
+        )
         lines = format_similar_players_with_explanations(
             players,
             limit=limit,
             explanations=explanations,
+            confidence=confidence,
         )
     else:
         lines = format_similar_players(players, limit=limit)
