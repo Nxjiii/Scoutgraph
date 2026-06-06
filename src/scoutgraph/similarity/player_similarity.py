@@ -3,6 +3,11 @@ import math
 import pandas as pd
 
 from scoutgraph.features.player_matrix import PLAYER_ID_COLUMNS
+from scoutgraph.similarity.confidence import (
+    SimilarityConfidence,
+    evaluate_similarity_confidence,
+    format_similarity_confidence,
+)
 from scoutgraph.similarity.explanations import (
     SimilarityExplanation,
     explain_player_similarity,
@@ -83,11 +88,33 @@ def explain_similar_players(
     }
 
 
+def evaluate_similar_player_confidence(
+    paths: ProjectPaths,
+    *,
+    player: str,
+    players: pd.DataFrame,
+    same_position: bool = False,
+) -> dict[str, SimilarityConfidence]:
+    """Evaluate confidence for each returned similar player."""
+    matrix = load_player_feature_matrix(paths)
+    return {
+        str(row["player_name"]): evaluate_similarity_confidence(
+            matrix,
+            player=player,
+            compared_player=str(row["player_name"]),
+            similarity=float(row["similarity"]),
+            same_position=same_position,
+        )
+        for _, row in players.iterrows()
+    }
+
+
 def format_similar_players_with_explanations(
     players: pd.DataFrame,
     *,
     limit: int = 5,
     explanations: dict[str, SimilarityExplanation] | None = None,
+    confidence: dict[str, SimilarityConfidence] | None = None,
 ) -> list[str]:
     lines = []
     for _, row in players.head(limit).iterrows():
@@ -99,6 +126,8 @@ def format_similar_players_with_explanations(
         if explanations is None:
             continue
         lines.extend(format_similarity_explanation(explanations[player_name]))
+        if confidence is not None:
+            lines.extend(format_similarity_confidence(confidence[player_name]))
     return lines
 
 

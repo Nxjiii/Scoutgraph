@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from scoutgraph.similarity.player_similarity import (
+    evaluate_similar_player_confidence,
     explain_similar_players,
     find_similar_players,
     format_similar_players,
@@ -160,6 +161,7 @@ def test_format_similar_players_can_include_explanations(tmp_path: Path) -> None
                 "team_name": "Bayer Leverkusen",
                 "passes_attempted_per_90": 100,
                 "carries_per_90": 40,
+                "minutes_played": 90,
             },
             {
                 "player_id": 2,
@@ -168,6 +170,7 @@ def test_format_similar_players_can_include_explanations(tmp_path: Path) -> None
                 "team_name": "Bayer Leverkusen",
                 "passes_attempted_per_90": 96,
                 "carries_per_90": 20,
+                "minutes_played": 90,
             },
         ]
     ).to_parquet(processed_root / "player_features.parquet", index=False)
@@ -186,7 +189,17 @@ def test_format_similar_players_can_include_explanations(tmp_path: Path) -> None
         player="Xhaka",
         players=players,
     )
-    lines = format_similar_players_with_explanations(players, explanations=explanations)
+    confidence = evaluate_similar_player_confidence(
+        ProjectPaths.from_root(tmp_path),
+        player="Xhaka",
+        players=players,
+        same_position=True,
+    )
+    lines = format_similar_players_with_explanations(
+        players,
+        explanations=explanations,
+        confidence=confidence,
+    )
 
     assert lines == [
         "Robert Andrich | Bayer Leverkusen | similarity 0.932",
@@ -194,4 +207,9 @@ def test_format_similar_players_can_include_explanations(tmp_path: Path) -> None
         "  - similar pass volume",
         "  Differences:",
         "  - Granit Xhaka has higher carry volume",
+        "  Confidence: high",
+        "  Limitations:",
+        "  - match-level sample only",
+        "  - based on the current generated feature matrix",
+        "  - same broad-position filter applied",
     ]
