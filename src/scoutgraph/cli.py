@@ -32,6 +32,10 @@ from scoutgraph.similarity.player_similarity import (
     format_similar_players,
     format_similar_players_with_explanations,
 )
+from scoutgraph.similarity.examples import (
+    format_similarity_example_results,
+    run_known_similarity_examples,
+)
 from scoutgraph.sources.statsbomb import StatsBombOpenDataClient
 from scoutgraph.sources.statsbomb.client import StatsBombMatchRef
 from scoutgraph.sources.statsbomb.discovery import (
@@ -615,4 +619,19 @@ def similarity_players(
         lines = format_similar_players(players, limit=limit)
 
     for line in lines:
+        typer.echo(line)
+
+
+@similarity_app.command("examples")
+def similarity_examples(
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+) -> None:
+    """Run known player similarity sanity examples."""
+    results = run_known_similarity_examples(ProjectPaths.from_root(root))
+
+    typer.echo("Known player similarity examples")
+    for line in format_similarity_example_results(results):
         typer.echo(line)
