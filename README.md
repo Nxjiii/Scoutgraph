@@ -147,6 +147,12 @@ Show shared traits, key differences, confidence, and limitations for similar pla
 scoutgraph similarity players --player "Granit Xhaka" --same-position --explain --limit 5
 ```
 
+Run known player similarity sanity examples:
+
+```bash
+scoutgraph similarity examples
+```
+
 ## Documentation
 
 Longer methodology, architecture, and setup guides will be added as the backend takes shape.
