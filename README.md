@@ -12,7 +12,7 @@ The first phase of the project is backend-only:
 
 ## Current Status
 
-This repo is in the first backend phase. It can list available StatsBomb Open Data competition-seasons, fetch and normalize match data, query normalized pass data, generate player and team feature matrices, calculate per-90 player metrics, inspect generated vectors, and run a first player-similarity baseline.
+This repo is in the first backend phase. It can list available StatsBomb Open Data competition-seasons, fetch and normalize match data, query normalized pass data, generate player and team feature matrices, calculate per-90 player metrics, inspect generated vectors, and run explainable player-similarity checks with confidence notes.
 
 ## Planned Backend Shape
 
