@@ -7,12 +7,12 @@ The first phase of the project is backend-only:
 - ingest football data from source adapters
 - normalize it into local analytical tables
 - engineer player and team features
-- calculate stylistic similarity
+- calculate stylistic similarity and position-aware tactical identity labels
 - expose the results through an API later
 
 ## Current Status
 
-This repo is in the first backend phase. It can list available StatsBomb Open Data competition-seasons, fetch and normalize match data, query normalized pass data, generate player and team feature matrices, calculate per-90 player metrics, inspect generated vectors, and run explainable player-similarity checks with confidence notes.
+This repo is in the first backend phase. It can list available StatsBomb Open Data competition-seasons, fetch and normalize match data, query normalized pass data, generate player and team feature matrices, calculate per-90 player metrics, inspect generated vectors, run explainable player-similarity checks with confidence notes, and generate position-aware tactical identity labels.
 
 ## Planned Backend Shape
 
@@ -22,6 +22,7 @@ src/scoutgraph/
   storage/       # local paths and storage helpers
   features/      # player/team feature engineering
   similarity/    # vector normalization and nearest-neighbor search
+  identity/      # percentile-based tactical labels and summaries
   api/           # FastAPI endpoints later
 ```
 
@@ -153,7 +154,7 @@ Run known player similarity sanity examples:
 scoutgraph similarity examples
 ```
 
-Generate tactical labels and a short player identity summary:
+Generate position-aware tactical labels and a short player identity summary:
 
 ```bash
 scoutgraph identity player --player "Granit Xhaka"
