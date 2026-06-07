@@ -24,6 +24,7 @@ from scoutgraph.features.sanity import (
     inspect_player_vector,
     inspect_team_vector,
 )
+from scoutgraph.identity.player_identity import build_player_identity, format_player_identity
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
 from scoutgraph.similarity.player_similarity import (
     evaluate_similar_player_confidence,
@@ -56,6 +57,7 @@ query_app = typer.Typer(help="Query normalized ScoutGraph tables.")
 list_app = typer.Typer(help="Discover available source competitions and matches.")
 features_app = typer.Typer(help="Build derived player and team feature tables.")
 similarity_app = typer.Typer(help="Find similar players and teams from feature tables.")
+identity_app = typer.Typer(help="Generate tactical identity labels and summaries.")
 app.add_typer(ingest_app, name="ingest")
 app.add_typer(inspect_app, name="inspect")
 app.add_typer(normalize_app, name="normalize")
@@ -63,6 +65,7 @@ app.add_typer(query_app, name="query")
 app.add_typer(list_app, name="list")
 app.add_typer(features_app, name="features")
 app.add_typer(similarity_app, name="similarity")
+app.add_typer(identity_app, name="identity")
 
 
 @app.callback()
@@ -634,4 +637,21 @@ def similarity_examples(
 
     typer.echo("Known player similarity examples")
     for line in format_similarity_example_results(results):
+        typer.echo(line)
+
+
+@identity_app.command("player")
+def identity_player(
+    player: Annotated[
+        str,
+        typer.Option(help="Player name or unique partial player name to describe."),
+    ],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+) -> None:
+    """Generate tactical labels and a summary for one player."""
+    identity = build_player_identity(ProjectPaths.from_root(root), player=player)
+    for line in format_player_identity(identity):
         typer.echo(line)

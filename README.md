@@ -153,6 +153,12 @@ Run known player similarity sanity examples:
 scoutgraph similarity examples
 ```
 
+Generate tactical labels and a short player identity summary:
+
+```bash
+scoutgraph identity player --player "Granit Xhaka"
+```
+
 ## Documentation
 
 Longer methodology, architecture, and setup guides will be added as the backend takes shape.
