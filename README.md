@@ -160,6 +160,12 @@ Generate position-aware tactical labels and a short player identity summary:
 scoutgraph identity player --player "Granit Xhaka"
 ```
 
+Run known player identity sanity examples:
+
+```bash
+scoutgraph identity examples
+```
+
 ## Documentation
 
 Longer methodology, architecture, and setup guides will be added as the backend takes shape.

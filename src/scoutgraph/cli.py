@@ -24,6 +24,10 @@ from scoutgraph.features.sanity import (
     inspect_player_vector,
     inspect_team_vector,
 )
+from scoutgraph.identity.examples import (
+    format_identity_example_results,
+    run_known_identity_examples,
+)
 from scoutgraph.identity.player_identity import build_player_identity, format_player_identity
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
 from scoutgraph.similarity.player_similarity import (
@@ -654,4 +658,19 @@ def identity_player(
     """Generate tactical labels and a summary for one player."""
     identity = build_player_identity(ProjectPaths.from_root(root), player=player)
     for line in format_player_identity(identity):
+        typer.echo(line)
+
+
+@identity_app.command("examples")
+def identity_examples(
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+) -> None:
+    """Run known player identity sanity examples."""
+    results = run_known_identity_examples(ProjectPaths.from_root(root))
+
+    typer.echo("Known player identity examples")
+    for line in format_identity_example_results(results):
         typer.echo(line)
