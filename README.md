@@ -198,6 +198,12 @@ Run the API locally:
 uvicorn scoutgraph.api.app:app --reload
 ```
 
+Fetch a player identity from the API:
+
+```bash
+curl "http://127.0.0.1:8000/players/Granit%20Xhaka/identity"
+```
+
 Run tests:
 
 ```bash
