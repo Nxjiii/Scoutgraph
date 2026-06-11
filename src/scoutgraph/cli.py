@@ -29,6 +29,7 @@ from scoutgraph.identity.examples import (
     run_known_identity_examples,
 )
 from scoutgraph.identity.player_identity import build_player_identity, format_player_identity
+from scoutgraph.identity.team_identity import build_team_identity, format_team_identity
 from scoutgraph.query.sample import format_passes, load_passes, load_sample_passes
 from scoutgraph.similarity.player_similarity import (
     evaluate_similar_player_confidence,
@@ -673,4 +674,21 @@ def identity_examples(
 
     typer.echo("Known player identity examples")
     for line in format_identity_example_results(results):
+        typer.echo(line)
+
+
+@identity_app.command("team")
+def identity_team(
+    team: Annotated[
+        str,
+        typer.Option(help="Team name or unique partial team name to describe."),
+    ],
+    root: Annotated[
+        str | None,
+        typer.Option(help="Project root. Defaults to the current working directory."),
+    ] = None,
+) -> None:
+    """Generate tactical labels and a summary for one team."""
+    identity = build_team_identity(ProjectPaths.from_root(root), team=team)
+    for line in format_team_identity(identity):
         typer.echo(line)
