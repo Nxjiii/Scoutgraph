@@ -192,6 +192,12 @@ Run the project info command:
 scoutgraph info
 ```
 
+Run the API locally:
+
+```bash
+uvicorn scoutgraph.api.app:app --reload
+```
+
 Run tests:
 
 ```bash
