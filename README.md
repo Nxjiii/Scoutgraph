@@ -204,6 +204,24 @@ Fetch a player identity from the API:
 curl "http://127.0.0.1:8000/players/Granit%20Xhaka/identity"
 ```
 
+Search generated player profiles:
+
+```bash
+curl "http://127.0.0.1:8000/players?query=Xhaka&limit=10"
+```
+
+Fetch a player profile with tactical identity and current metrics:
+
+```bash
+curl "http://127.0.0.1:8000/players/Granit%20Xhaka"
+```
+
+Fetch explainable, position-aware player similarity results:
+
+```bash
+curl "http://127.0.0.1:8000/players/Granit%20Xhaka/similarity?same_position=true&limit=5"
+```
+
 Run tests:
 
 ```bash
